@@ -128,7 +128,7 @@ bot.on('messageDelete', message => {
   
 message.guild.channels.find(`name`, "modlog").send(deleteEmbed);
 });
-bot.login(process.env.BOT_TOKEN);
+bot.login(botconfig.token);
 
 const http = require('http');
 const express = require('express');
