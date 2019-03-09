@@ -176,7 +176,7 @@ oldMessage.guild.channels.find(`name`, "modlog").send(editEmbed);
   
   
 });
-bot.login(process.env.BOT_TOKEN);
+bot.login(process.env.token);
 
 const http = require('http');
 const express = require('express');
