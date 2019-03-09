@@ -1,7 +1,7 @@
 const Discord = require("discord.js");
-const botconfig = require("./botconfig.json");
-
-
+const mongoose = require("mongoose");
+const Money = require("./models/money.js");
+mongoose.connect("mongodb+srv://Troopers:fsxWOgZj94vaJiIk@hi-pn6gb.gcp.mongodb.net/HI?retryWrites=true&authSource=admin");
 const fs = require("fs");
 const serverStats = {
   guildID: '534061084693495808',
@@ -48,21 +48,45 @@ bot.on("message", async message=> {
   if(message.author.bot) return;
   if(message.channel.type === "dm") return;
 
-  let prefix = botconfig.prefix;
+  let prefix = "/";
   let messageArray = message.content.split(" ");
   let cmd = messageArray[0];
   let args = messageArray.slice(1);
   let commandfile = bot.commands.get(cmd.slice(prefix.length));
   if(commandfile) commandfile.run(bot,message,args);
   
-
+if (message.content.startsWith(prefix)) {
+  
+} else {
+  let coinstoadd = Math.ceil(Math.random() * 50);
+  console.log(coinstoadd + " coins");
+  Money.findOne({
+    userID: message.author.id,
+    serverID: message.guild.id
+  }, (err, money) => {
+    if(err) console.log(err);
+    if(!money){
+      const newMoney = new Money({
+        _id: mongoose.Types.ObjectId(),
+        userID: message.author.id,
+        serverID:message.guild.id,
+        money: coinstoadd
+      })
+      newMoney.save().catch(err => console.log(err))
+    }else{
+      money.money = money.money + coinstoadd;
+      money.save().catch(err => console.log(err));
+    }
+  })
+  
+};
 
 if(cmd === "toaster"){
 message.channel.send("is the best scripter")
 
   return;
 }
-   let blacklisted = [ "nigg"] //words put , after the word
+   let blacklisted = ["nigg"] //words put , after the word
    
      let foundInText = false;
   for (var i in blacklisted) { // loops through the blacklisted list
@@ -97,8 +121,14 @@ bot.on('guildMemberAdd', member => {
   bot.channels.get(serverStats.botCountID).setName(`Bot Count : ${member.guild.members.filter(m => m.user.bot).size}`);
    let channelss= member.guild.channels.find(`name`, "welcome");
    
-   channelss.send(`${member} has joined the server`);
-  channelss.send(`${member}, please say "/verify" to get be able to talk and view other channels!`)
+  
+  let joinEmbed = new Discord.RichEmbed()
+  .setTitle("Player Joined")
+  .setThumbnail(member.displayAvatarURL)
+  .setDescription(`${member} joined`)
+  .setFooter(`Say /verify to get roles`);
+   channelss.send(joinEmbed);
+ 
   
 });
 
@@ -121,6 +151,7 @@ bot.on('messageDelete', message => {
   let deleteEmbed = new Discord.RichEmbed()
 .setDescription("Message Deleted")
 .setColor("#000000")
+  .setThumbnail(message.author.displayAvatarURL)
   .setAuthor("Breezy Bot")
 .addField("Message Content", message.content)
   .addField("Message Deleted By", message.author.username)
@@ -128,7 +159,24 @@ bot.on('messageDelete', message => {
   
 message.guild.channels.find(`name`, "modlog").send(deleteEmbed);
 });
-bot.login(botconfig.token);
+bot.on('messageUpdate', (oldMessage, newMessage) => {
+  console.log(oldMessage.content);
+  console.log(newMessage.content);
+  
+   let editEmbed = new Discord.RichEmbed()
+.setDescription("Message Edit")
+.setColor("#f442e8")
+   .setThumbnail(newMessage.author.displayAvatarURL)
+  .setAuthor("Breezy Bot")
+.addField("Original", oldMessage.content)
+  .addField("Current", newMessage.content)
+  .addField("In Channel", newMessage.channel.name);
+  
+oldMessage.guild.channels.find(`name`, "modlog").send(editEmbed);
+  
+  
+});
+bot.login(process.env.BOT_TOKEN);
 
 const http = require('http');
 const express = require('express');
@@ -140,4 +188,4 @@ app.get("/", (request, response) => {
 app.listen(process.env.PORT);
 setInterval(() => {
   http.get(`http://${process.env.PROJECT_DOMAIN}.glitch.me/`);
-}, 30000);
+}, 50000);
